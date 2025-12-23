@@ -6,6 +6,33 @@ on:
   pull_request:
 
 jobs:
+  # https://github.com/controlplaneio/kubesec/blob/master/.github/workflows/security_analysis.yml
+  trivy:
+    name: Trivy
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Build an image from Dockerfile
+      run: |
+        docker build . -t kubesec:${{ github.sha }}
+
+    - name: Run Trivy
+      uses: aquasecurity/trivy-action@0.32.0
+      with:
+        image-ref: kubesec:${{ github.sha }}
+        format: template
+        template: "@/contrib/sarif.tpl"
+        output: trivy-results.sarif
+
+    - name: Upload Trivy results to the Security tab
+      # can't submit scan results on forks
+      if: github.repository_owner == 'controlplaneio'
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: trivy-results.sarif
+
   security:
     runs-on: ubuntu-latest
 
