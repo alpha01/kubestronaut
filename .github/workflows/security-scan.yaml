@@ -88,8 +88,10 @@ jobs:
     # -----------------------------
     - name: Install kubesec
       run: |
-        curl -s https://kubesec.io/install.sh | bash
-        sudo mv kubesec /usr/local/bin/
+        wget https://github.com/controlplaneio/kubesec/releases/download/v2.14.2/kubesec_linux_arm64.tar.gz
+        gunzip kubesec_linux_arm64.tar.gz
+        tar -xvf kubesec_linux_arm64.tar
+        sudo mv -v kubesec /usr/local/bin/
 
     - name: kubesec scan Kubernetes manifests
       run: |
