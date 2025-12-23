@@ -28,7 +28,7 @@ jobs:
 
     - name: Upload Trivy results to the Security tab
       # can't submit scan results on forks
-      if: github.repository_owner == 'controlplaneio'
+      if: github.repository_owner == 'alpha01'
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: trivy-results.sarif
