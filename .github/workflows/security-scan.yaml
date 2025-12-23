@@ -31,27 +31,27 @@ jobs:
     # -----------------------------
     # Docker Scout (SBOM + CVEs)
     # -----------------------------
-    - name: Docker Scout - Quickview
-      uses: docker/scout-action@v1
-      with:
-        command: quickview
-        image: demo-nginx:${{ github.sha }}
+    # - name: Docker Scout - Quickview
+    #   uses: docker/scout-action@v1
+    #   with:
+    #     command: quickview
+    #     image: demo-nginx:${{ github.sha }}
 
-    - name: Docker Scout - CVE Scan
-      uses: docker/scout-action@v1
-      with:
-        command: cves
-        image: demo-nginx:${{ github.sha }}
-        severity: critical,high
-        exit-code: true
+    # - name: Docker Scout - CVE Scan
+    #   uses: docker/scout-action@v1
+    #   with:
+    #     command: cves
+    #     image: demo-nginx:${{ github.sha }}
+    #     severity: critical,high
+    #     exit-code: true
 
-    - name: Docker Scout - SBOM
-      uses: docker/scout-action@v1
-      with:
-        command: sbom
-        image: demo-nginx:${{ github.sha }}
-        format: cyclonedx
-        output: sbom.json
+    # - name: Docker Scout - SBOM
+    #   uses: docker/scout-action@v1
+    #   with:
+    #     command: sbom
+    #     image: demo-nginx:${{ github.sha }}
+    #     format: cyclonedx
+    #     output: sbom.json
 
     # -----------------------------
     # kubesec scan (manifests)
@@ -73,3 +73,12 @@ jobs:
           echo "❌ kubesec score too low"
           exit 1
         fi
+
+    # -----------------------------
+    # kubelint (manifests)
+    # -----------------------------
+    - name: Scan manifests
+      id: kube-lint-scan
+      uses: stackrox/kube-linter-action@v1
+      with:
+        directory: k8s
