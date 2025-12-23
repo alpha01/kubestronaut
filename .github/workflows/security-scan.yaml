@@ -1,0 +1,75 @@
+name: Container & Kubernetes Security Scan
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v4
+
+    # -----------------------------
+    # Docker Build
+    # -----------------------------
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build NGINX image
+      run: |
+        docker build -t demo-nginx:${{ github.sha }} .
+
+    # -----------------------------
+    # Docker Scout (SBOM + CVEs)
+    # -----------------------------
+    - name: Docker Scout - Quickview
+      uses: docker/scout-action@v1
+      with:
+        command: quickview
+        image: demo-nginx:${{ github.sha }}
+
+    - name: Docker Scout - CVE Scan
+      uses: docker/scout-action@v1
+      with:
+        command: cves
+        image: demo-nginx:${{ github.sha }}
+        severity: critical,high
+        exit-code: true
+
+    - name: Docker Scout - SBOM
+      uses: docker/scout-action@v1
+      with:
+        command: sbom
+        image: demo-nginx:${{ github.sha }}
+        format: cyclonedx
+        output: sbom.json
+
+    # -----------------------------
+    # kubesec scan (manifests)
+    # -----------------------------
+    - name: Install kubesec
+      run: |
+        curl -s https://kubesec.io/install.sh | bash
+        sudo mv kubesec /usr/local/bin/
+
+    - name: kubesec scan Kubernetes manifests
+      run: |
+        kubesec scan k8s/secured.yaml| tee kubesec-results.json
+
+    - name: Fail if kubesec score is low
+      run: |
+        SCORE=$(jq '.[0].score' kubesec-results.json)
+        echo "Kubesec score: $SCORE"
+        if [ "$SCORE" -lt 7 ]; then
+          echo "❌ kubesec score too low"
+          exit 1
+        fi
